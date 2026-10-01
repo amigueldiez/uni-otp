@@ -71,11 +71,19 @@ usuario en Configuración.
 
 ### Nota sobre autorrelleno en modo B
 
-El content script corre en la página SSO. Para autorrellenar en modo B, la clave
-se descifra en el popup/service worker y el código generado se envía
-temporalmente al content script. Esto evita pedir la contraseña en cada página
-SSO, a cambio de que el código pase brevemente por el content script. El usuario
-debe aceptar conscientemente este trade-off.
+El content script corre en la página SSO pero no tiene acceso a la clave (está
+cifrada). El mecanismo de autorrelleno en modo B es el siguiente:
+
+- El usuario abre el popup y **desbloquea** introduciendo su contraseña. Ese
+  desbloqueo es válido solo durante la sesión actual del popup.
+- Mientras el popup está abierto y desbloqueado, el código generado se envía
+  temporalmente al content script (mensaje) para rellenar el campo en la página
+  SSO activa.
+
+Es decir, en modo B el autorrelleno requiere abrir el popup y desbloquear; el
+código (no la contraseña) pasa brevemente por el content script. El usuario debe
+aceptar conscientemente este trade-off. No se guarda ninguna clave derivada al
+cerrar el popup.
 
 ## Detección de la página SSO
 
