@@ -113,7 +113,7 @@ async function saveConfig() {
     config = { mode, payload: await encryptSecret(secret, password) };
   }
   await chrome.storage.local.set({ config });
-  await chrome.runtime.sendMessage({ type: 'LOCK' });
+  await chrome.runtime.sendMessage({ type: mode === 'encrypted' ? 'UNLOCK' : 'LOCK', secret: mode === 'encrypted' ? secret : undefined });
   codeViewPassword = mode === 'encrypted' ? password : null;
   switchView('code');
   msg.textContent = 'Guardado.';
