@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <header>
+    <h1>Ule-OTP</h1>
+    <nav>
+      <button id="tab-code" class="active">Código</button>
+      <button id="tab-config">Configuración</button>
+    </nav>
+  </header>
+
+  <section id="view-code">
+    <div id="unlock" class="hidden">
+      <label for="password">Contraseña</label>
+      <input type="password" id="password" autocomplete="current-password">
+      <button id="unlock-btn">Desbloquear</button>
+      <p id="unlock-error" class="error hidden">Contraseña incorrecta</p>
+    </div>
+    <div id="code-view" class="hidden">
+      <p class="code" id="code"></p>
+      <p id="expires"></p>
+    </div>
+    <p id="code-empty" class="hidden">Configura tu token en la pestaña Configuración.</p>
+    <button id="refresh-code" class="hidden">Actualizar</button>
+  </section>
+
+  <section id="view-config" class="hidden">
+    <label for="mode">Almacenamiento</label>
+    <select id="mode">
+      <option value="plain">Sin contraseña (simple)</option>
+      <option value="encrypted">Con contraseña (seguro)</option>
+    </select>
+    <label for="secret">Secret base32</label>
+    <input type="text" id="secret" placeholder="ABCDEF...">
+    <div id="password-field" class="hidden">
+      <label for="new-password">Contraseña para cifrar</label>
+      <input type="password" id="new-password">
+    </div>
+    <button id="save-config">Guardar</button>
+    <p id="config-msg" class="hidden"></p>
+  </section>
+
+  <script type="module" src="popup.js"></script>
+</body>
+</html>

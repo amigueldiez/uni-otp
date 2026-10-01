@@ -1,0 +1,12 @@
+body { width: 280px; font-family: system-ui, sans-serif; margin: 0; padding: 12px; }
+h1 { font-size: 16px; margin: 0 0 8px; }
+nav { margin-bottom: 12px; }
+button { cursor: pointer; }
+.code { font-size: 28px; font-weight: 700; letter-spacing: 4px; text-align: center; margin: 12px 0 4px; }
+#expires { text-align: center; color: #666; font-size: 12px; }
+label { display: block; margin-top: 8px; font-size: 12px; }
+input, select { width: 100%; box-sizing: border-box; margin-top: 2px; }
+.hidden { display: none; }
+.error { color: #c00; font-size: 12px; }
+#config-msg { font-size: 12px; }
+#refresh-code, #save-config, #unlock-btn { margin-top: 10px; width: 100%; }
