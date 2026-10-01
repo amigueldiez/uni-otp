@@ -76,6 +76,13 @@ async function renderCode() {
   unlockTimer = setInterval(tick, 1000);
 }
 
+async function refreshActiveTab() {
+  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+  if (tab && tab.id) {
+    chrome.tabs.sendMessage(tab.id, { type: 'CHECK_NOW' }).catch(() => {});
+  }
+}
+
 async function unlock() {
   const password = $('password').value;
   const err = $('unlock-error');
@@ -88,6 +95,7 @@ async function unlock() {
   err.classList.add('hidden');
   codeViewPassword = password;
   await chrome.runtime.sendMessage({ type: 'UNLOCK', secret: decrypted });
+  await refreshActiveTab();
   $('password').value = '';
   renderCode();
 }
@@ -114,6 +122,7 @@ async function saveConfig() {
   }
   await chrome.storage.local.set({ config });
   await chrome.runtime.sendMessage({ type: mode === 'encrypted' ? 'UNLOCK' : 'LOCK', secret: mode === 'encrypted' ? secret : undefined });
+  if (mode === 'encrypted') await refreshActiveTab();
   codeViewPassword = mode === 'encrypted' ? password : null;
   switchView('code');
   msg.textContent = 'Guardado.';

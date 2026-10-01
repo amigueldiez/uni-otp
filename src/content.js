@@ -34,3 +34,9 @@ if (document.readyState === 'loading') {
   checkPage();
 }
 setTimeout(checkPage, 1500);
+
+chrome.runtime.onMessage.addListener((message) => {
+  if (message && message.type === 'CHECK_NOW') {
+    checkPage();
+  }
+});
