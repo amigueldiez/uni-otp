@@ -21,7 +21,7 @@ La extensión Uni-OTP aparecerá en tu barra de herramientas. También puedes fi
 
 1. Haz clic en el icono de Uni-OTP para abrir el popup.
 2. Ve a la pestaña **Configuración**.
-3. Pega tu secret **base32** (por ejemplo, el que te proporciona la Universidad de León o tu app autenticadora, como `JBSWY3DPEHPK3PXP`).
+3. Pega tu secret **base32** (por ejemplo, el que te proporciona la Universidad de León o tu app autenticadora).
 4. Pulsa **Guardar**.
 
 ## Almacenamiento
