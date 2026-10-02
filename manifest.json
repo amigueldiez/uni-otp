@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "Ule-OTP",
+  "name": "Uni-OTP",
   "version": "1.0.0",
-  "description": "Genera y rellena los códigos de verificación multifactor de la Universidad de León.",
+  "description": "Genera y rellena los códigos de verificación multifactor.",
   "permissions": ["storage", "activeTab"],
   "host_permissions": ["https://sso.unileon.es/*"],
   "background": {
@@ -16,8 +16,18 @@
       "run_at": "document_idle"
     }
   ],
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
   "action": {
     "default_popup": "popup/popup.html",
-    "default_title": "Ule-OTP"
+    "default_title": "Uni-OTP",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
   }
 }

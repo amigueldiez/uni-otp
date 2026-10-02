@@ -1,9 +1,7 @@
 import { generateTOTP, getRemainingSeconds } from '../src/totp.js';
-import { encryptSecret, decryptSecret } from '../src/crypto.js';
 
 const $ = (id) => document.getElementById(id);
 let config = null;
-let codeViewPassword = null;
 let unlockTimer = null;
 
 const views = { code: $('view-code'), config: $('view-config') };
@@ -21,136 +19,91 @@ async function loadConfig() {
   config = (await chrome.storage.local.get('config')).config || null;
 }
 
-async function getSecretForDisplay() {
-  if (!config) return null;
-  if (config.mode === 'plain') return config.secret;
-  if (!codeViewPassword) return null;
-  try {
-    return await decryptSecret(config.payload, codeViewPassword);
-  } catch (e) {
-    codeViewPassword = null;
-    return 'wrong';
-  }
+function setMessage(text, type = '') {
+  const msg = $('config-msg');
+  msg.textContent = text;
+  msg.classList.remove('hidden', 'ok', 'error');
+  if (type) msg.classList.add(type);
+}
+
+function updateProgress() {
+  const total = 30;
+  const remaining = getRemainingSeconds();
+  const pct = (remaining / total) * 100;
+  const bar = $('progress-bar');
+  bar.style.width = `${pct}%`;
+  bar.classList.toggle('warning', remaining <= 10 && remaining > 5);
+  bar.classList.toggle('critical', remaining <= 5);
+}
+
+let copyTimer = null;
+async function copyCode() {
+  const code = $('code').textContent;
+  if (!code) return;
+  await navigator.clipboard.writeText(code);
+  const btn = $('copy-code');
+  btn.classList.add('copied');
+  clearTimeout(copyTimer);
+  copyTimer = setTimeout(() => btn.classList.remove('copied'), 1500);
 }
 
 async function renderCode() {
   const empty = $('code-empty');
   const codeEl = $('code');
   const expiresEl = $('expires');
-  const unlock = $('unlock');
-  const codeView = $('code-view');
+  const codeCard = $('code-card');
   const refresh = $('refresh-code');
   clearInterval(unlockTimer);
   if (!config) {
     empty.classList.remove('hidden');
-    codeView.classList.add('hidden');
-    unlock.classList.add('hidden');
+    codeCard.classList.add('hidden');
     refresh.classList.add('hidden');
     return;
   }
-  const secret = await getSecretForDisplay();
-  if (secret === 'wrong') {
-    empty.classList.add('hidden');
-    codeView.classList.add('hidden');
-    refresh.classList.add('hidden');
-    unlock.classList.remove('hidden');
-    return;
-  }
-  if (!secret) {
-    empty.classList.add('hidden');
-    codeView.classList.add('hidden');
-    refresh.classList.add('hidden');
-    unlock.classList.remove('hidden');
-    return;
-  }
-  unlock.classList.add('hidden');
+  const secret = config.secret;
   empty.classList.add('hidden');
-  codeView.classList.remove('hidden');
+  codeCard.classList.remove('hidden');
   refresh.classList.remove('hidden');
   const tick = async () => {
     const code = await generateTOTP(secret);
     codeEl.textContent = code;
     expiresEl.textContent = `Válido ${getRemainingSeconds()} s`;
+    updateProgress();
   };
   await tick();
   unlockTimer = setInterval(tick, 1000);
 }
 
-async function refreshActiveTab() {
-  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-  if (tab && tab.id) {
-    chrome.tabs.sendMessage(tab.id, { type: 'CHECK_NOW' }).catch(() => {});
-  }
-}
-
-async function unlock() {
-  const password = $('password').value;
-  const err = $('unlock-error');
-  const secret = await getSecretForDisplay();
-  const decrypted = await decryptSecret(config.payload, password).catch(() => null);
-  if (!decrypted) {
-    err.classList.remove('hidden');
-    return;
-  }
-  err.classList.add('hidden');
-  codeViewPassword = password;
-  await chrome.runtime.sendMessage({ type: 'UNLOCK', secret: decrypted });
-  await refreshActiveTab();
-  $('password').value = '';
-  renderCode();
-}
-
 async function saveConfig() {
-  const mode = $('mode').value;
   const secret = $('secret').value.trim().replace(/\s+/g, '');
-  const password = $('new-password').value;
-  const msg = $('config-msg');
   if (!secret) {
-    msg.textContent = 'Introduce un secret válido.';
-    msg.classList.remove('hidden');
+    setMessage('Introduce un secret válido.', 'error');
     return;
   }
-  if (mode === 'plain') {
-    config = { mode, secret };
-  } else {
-    if (!password) {
-      msg.textContent = 'Introduce una contraseña.';
-      msg.classList.remove('hidden');
-      return;
-    }
-    config = { mode, payload: await encryptSecret(secret, password) };
-  }
+  config = { mode: 'plain', secret };
   await chrome.storage.local.set({ config });
-  await chrome.runtime.sendMessage({ type: mode === 'encrypted' ? 'UNLOCK' : 'LOCK', secret: mode === 'encrypted' ? secret : undefined });
-  if (mode === 'encrypted') await refreshActiveTab();
-  codeViewPassword = mode === 'encrypted' ? password : null;
   switchView('code');
-  msg.textContent = 'Guardado.';
-  msg.classList.remove('hidden');
+  setMessage('Guardado.', 'ok');
 }
 
 function syncConfigForm() {
   if (!config) return;
-  $('mode').value = config.mode || 'plain';
-  $('mode').dispatchEvent(new Event('change'));
-  $('secret').value = config.mode === 'plain' ? (config.secret || '') : '';
-  $('new-password').value = '';
+  $('secret').value = config.secret || '';
 }
 
 async function init() {
   for (const [name, el] of Object.entries(tabs)) {
     el.addEventListener('click', () => switchView(name));
   }
-  $('mode').addEventListener('change', () => {
-    $('password-field').classList.toggle('hidden', $('mode').value !== 'encrypted');
+  $('config-form').addEventListener('submit', (e) => {
+    e.preventDefault();
+    saveConfig();
   });
-  $('save-config').addEventListener('click', saveConfig);
-  $('unlock-btn').addEventListener('click', unlock);
-  $('password').addEventListener('keydown', (e) => { if (e.key === 'Enter') unlock(); });
   $('refresh-code').addEventListener('click', renderCode);
+  $('copy-code').addEventListener('click', copyCode);
+  $('goto-config').addEventListener('click', () => switchView('config'));
   await loadConfig();
   syncConfigForm();
-  $('password-field').classList.toggle('hidden', !config || config.mode !== 'encrypted');
   renderCode();
 }
 
